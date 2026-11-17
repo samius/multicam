@@ -7,11 +7,38 @@
     android:padding="12dp"
     android:layout_marginBottom="8dp">
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:background="#000000">
+
+        <ImageView
+            android:id="@+id/camPreview"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="náhled kamery" />
+
+        <!-- Fallback shown whenever no preview JPEG could be fetched (offline, old
+             firmware without /preview.jpg, slow network, etc.) so the tile never
+             looks broken/empty - always tells you *something* about the camera. -->
+        <TextView
+            android:id="@+id/camPreviewFallback"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:gravity="center"
+            android:textColor="#8A8F98"
+            android:textSize="12sp"
+            android:background="#000000"
+            android:text="bez náhledu" />
+    </FrameLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:layout_marginTop="8dp">
 
         <View
             android:id="@+id/recDot"

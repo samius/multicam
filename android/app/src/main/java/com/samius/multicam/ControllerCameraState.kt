@@ -13,4 +13,7 @@ data class ControllerCameraState(
     var thermalStatus: String? = null,
     var lastSeenMs: Long = System.currentTimeMillis(),
     var reachable: Boolean = true,
+    /** Raw JPEG bytes of the last successfully fetched preview, or null if none yet / stale. */
+    var previewJpeg: ByteArray? = null,
+    var previewFetchedMs: Long = 0L,
 )

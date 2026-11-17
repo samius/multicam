@@ -59,6 +59,7 @@ class ControllerActivity : AppCompatActivity() {
 
         scan()
         startPollLoop()
+        startPreviewLoop()
     }
 
     private fun scan() {
@@ -107,6 +108,30 @@ class ControllerActivity : AppCompatActivity() {
                         } catch (e: Exception) {
                             cam.reachable = false
                         }
+                    }
+                }
+                adapter.submit(cameras.values.toList())
+                kotlinx.coroutines.delay(1500)
+            }
+        }
+    }
+
+    /** Periodically fetches /preview.jpg for every known camera, independent of the
+     * status poll loop so a slow/failing preview fetch never blocks status updates. */
+    private fun startPreviewLoop() {
+        lifecycleScope.launch {
+            while (polling) {
+                withContext(Dispatchers.IO) {
+                    cameras.values.toList().forEach { cam ->
+                        val jpeg = lanClient.fetchPreview(cam.address, cam.lanPort)
+                        if (jpeg != null) {
+                            cam.previewJpeg = jpeg
+                            cam.previewFetchedMs = System.currentTimeMillis()
+                        }
+                        // On failure, deliberately leave the old previewJpeg/timestamp in
+                        // place - the adapter's own staleness check (>8s) decides when to
+                        // fall back to the placeholder, so a single dropped frame doesn't
+                        // flicker the tile to "no preview" and back.
                     }
                 }
                 adapter.submit(cameras.values.toList())
