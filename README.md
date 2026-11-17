@@ -10,8 +10,9 @@ Plný návrh a akceptační kritéria: [`handoff-multicam.md`](./handoff-multica
 1. **server/** — Node.js/Express server. Drží požadovaný stav kamer, přijímá
    heartbeaty a náhledy, servíruje ovládací stránku (`server/public/index.html`,
    jeden soubor, bez buildu).
-2. **android/** — (TODO, další krok) nativní Kotlin appka pro S20/S20 FE:
-   nahrává na SD kartu a pollí server na start/stop příkazy.
+2. **android/** — nativní Kotlin appka pro S20/S20 FE (CameraX, nahrávání na
+   SD kartu, segmentace, polling serveru, foreground service, autostart).
+   Build jde přes GitHub Actions, viz [`android/README.md`](./android/README.md).
 
 iPhone zůstává na Blackmagic Camera, do tohoto repa nepatří — protokol je ale
 navržený tak, aby šel později doplnit nativní iOS klient (viz "Mimo rozsah"
@@ -82,5 +83,6 @@ Dál nginx vhost (proxy_pass na 127.0.0.1:8787) + certbot pro
 
 - [x] Server (stav, heartbeat, preview relay, API)
 - [x] Ovládací webová stránka (mobile-first, tmavý režim, start/stop s potvrzením)
-- [ ] Nasazení na camera.samius.cz
-- [ ] Android aplikace (Kotlin) pro S20 / S20 FE
+- [x] Nasazení na camera.samius.cz (Docker + nginx + Let's Encrypt)
+- [x] Android aplikace (Kotlin) pro S20 / S20 FE — zdrojáky hotové, build přes CI
+- [ ] Reálný test na fyzickém S20 / S20 FE (kamera, SD zápis, výpadek sítě, teplota)

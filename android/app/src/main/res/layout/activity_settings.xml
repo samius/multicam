@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0B0C0F"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView style="@style/SettingsLabel" android:text="Server URL (např. https://camera.samius.cz)" />
+        <EditText android:id="@+id/editServerUrl" style="@style/SettingsInput" android:inputType="textUri" />
+
+        <TextView style="@style/SettingsLabel" android:text="Token" />
+        <EditText android:id="@+id/editToken" style="@style/SettingsInput" android:inputType="textPassword" />
+
+        <TextView style="@style/SettingsLabel" android:text="Jméno zařízení (device id)" />
+        <EditText android:id="@+id/editDeviceName" style="@style/SettingsInput" android:inputType="text" />
+
+        <TextView style="@style/SettingsLabel" android:text="Rozlišení (1920x1080 nebo 3840x2160)" />
+        <EditText android:id="@+id/editResolution" style="@style/SettingsInput" android:inputType="text" />
+
+        <TextView style="@style/SettingsLabel" android:text="FPS (25 nebo 30)" />
+        <EditText android:id="@+id/editFps" style="@style/SettingsInput" android:inputType="number" />
+
+        <TextView style="@style/SettingsLabel" android:text="Bitrate (kbps, např. 18000)" />
+        <EditText android:id="@+id/editBitrate" style="@style/SettingsInput" android:inputType="number" />
+
+        <TextView style="@style/SettingsLabel" android:text="Délka segmentu (minuty)" />
+        <EditText android:id="@+id/editSegmentMinutes" style="@style/SettingsInput" android:inputType="number" />
+
+        <TextView style="@style/SettingsLabel" android:text="Ruční ISO (0 = auto)" />
+        <EditText android:id="@+id/editIso" style="@style/SettingsInput" android:inputType="number" />
+
+        <TextView style="@style/SettingsLabel" android:text="Ruční expozice (čas v µs, 0 = auto)" />
+        <EditText android:id="@+id/editExposureUs" style="@style/SettingsInput" android:inputType="number" />
+
+        <TextView style="@style/SettingsLabel" android:text="Vyvážení bílé (K, 0 = auto; např. 4000)" />
+        <EditText android:id="@+id/editWbKelvin" style="@style/SettingsInput" android:inputType="number" />
+
+        <CheckBox
+            android:id="@+id/checkUseSdCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#E8E8EA"
+            android:layout_marginTop="16dp"
+            android:text="Nahrávat na SD kartu (pokud není, padá na interní úložiště)" />
+
+        <Button
+            android:id="@+id/saveButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="24dp"
+            android:text="Uložit" />
+
+        <Button
+            android:id="@+id/pickFolderButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="12dp"
+            android:text="Vybrat složku na SD kartě (SAF)" />
+
+    </LinearLayout>
+</ScrollView>
