@@ -89,7 +89,7 @@ class RecordingService : LifecycleService() {
 
     /** Lets MainActivity attach its PreviewView surface once the UI is visible. */
     fun attachPreviewSurface(surfaceProvider: androidx.camera.core.Preview.SurfaceProvider?) {
-        cameraController.start(surfaceProvider)
+        cameraController.attachPreviewSurface(surfaceProvider)
     }
 
     private fun bindToWifiIfAvailable() {

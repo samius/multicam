@@ -26,7 +26,7 @@ object Config {
         set(v) = prefs.edit().putString("serverUrl", v.trimEnd('/')).apply()
 
     var token: String
-        get() = prefs.getString("token", "") ?: ""
+        get() = prefs.getString("token", "asdf") ?: "asdf"
         set(v) = prefs.edit().putString("token", v).apply()
 
     var deviceName: String

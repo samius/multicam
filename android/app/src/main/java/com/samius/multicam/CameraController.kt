@@ -57,6 +57,8 @@ class CameraController(
     private var recorder: Recorder? = null
     private var activeRecording: Recording? = null
     private var imageAnalysis: ImageAnalysis? = null
+    private var previewUseCase: Preview? = null
+    @Volatile private var isBound: Boolean = false
 
     private val segmentStartMs = AtomicLong(0L)
     private val currentFileDurationSec = AtomicLong(0L)
@@ -82,19 +84,38 @@ class CameraController(
         return ((System.currentTimeMillis() - start) / 1000).toInt()
     }
 
-    /** Must be called on main thread. previewView may be null for a headless/dimmed start. */
+    /**
+     * Must be called on main thread. previewProvider may be null for a headless/dimmed start
+     * (e.g. called once from the Service with no UI yet). Binds use cases exactly once; later
+     * calls (e.g. when MainActivity reattaches after rotation/reopen) only rewire the existing
+     * Preview's SurfaceProvider so an in-progress recording is never interrupted.
+     */
     fun start(previewProvider: androidx.camera.core.Preview.SurfaceProvider?) {
+        if (isBound) {
+            previewProvider?.let { previewUseCase?.setSurfaceProvider(it) }
+            return
+        }
         val providerFuture = ProcessCameraProvider.getInstance(context)
         providerFuture.addListener({
             try {
                 val provider = providerFuture.get()
                 cameraProvider = provider
                 bindUseCases(provider, previewProvider)
+                isBound = true
             } catch (e: Exception) {
                 lastError = "init camera: ${e.message}"
                 Log.e(TAG, "Camera init failed", e)
             }
         }, ContextCompat.getMainExecutor(context))
+    }
+
+    /** Explicitly (re)attach a preview surface without touching the camera binding. */
+    fun attachPreviewSurface(previewProvider: androidx.camera.core.Preview.SurfaceProvider?) {
+        if (!isBound) {
+            start(previewProvider)
+        } else {
+            previewProvider?.let { previewUseCase?.setSurfaceProvider(it) }
+        }
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -122,6 +143,7 @@ class CameraController(
 
         val preview = previewBuilder.build()
         previewProvider?.let { preview.setSurfaceProvider(it) }
+        previewUseCase = preview
 
         val analysis = analysisBuilder.build()
         analysis.setAnalyzer(cameraExecutor) { imageProxy -> onAnalysisFrame(imageProxy) }
@@ -250,6 +272,7 @@ class CameraController(
     fun shutdown() {
         stopSegment()
         cameraProvider?.unbindAll()
+        isBound = false
         cameraExecutor.shutdown()
     }
 }
