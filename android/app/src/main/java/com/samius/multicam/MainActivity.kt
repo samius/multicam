@@ -46,6 +46,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Config.applyFromIntentExtras(intent.extras)
 
+        if (Config.isController()) {
+            startActivity(Intent(this, ControllerActivity::class.java))
+            finish()
+            return
+        }
+
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setMinimumBrightness()
 
@@ -81,6 +87,14 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         Config.applyFromIntentExtras(intent.extras)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (Config.isController()) {
+            startActivity(Intent(this, ControllerActivity::class.java))
+            finish()
+        }
     }
 
     private fun hasAllPermissions(): Boolean = requiredPermissions.all {

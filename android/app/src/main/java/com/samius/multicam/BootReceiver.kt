@@ -14,6 +14,8 @@ import androidx.core.content.ContextCompat
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+            Config.init(context)
+            if (Config.isController()) return
             val serviceIntent = Intent(context, RecordingService::class.java)
             ContextCompat.startForegroundService(context, serviceIntent)
         }

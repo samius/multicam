@@ -74,6 +74,22 @@ object Config {
         get() = prefs.getString("safTreeUri", "") ?: ""
         set(v) = prefs.edit().putString("safTreeUri", v).apply()
 
+    /** "camera" (default) or "controller" - switchable at any time from Settings. */
+    var role: String
+        get() = prefs.getString("role", "camera") ?: "camera"
+        set(v) = prefs.edit().putString("role", v).apply()
+
+    fun isController(): Boolean = role == "controller"
+
+    /** Port the embedded LAN HTTP server listens on when acting as a camera. */
+    const val LAN_PORT = 8766
+
+    /** UDP port used for LAN discovery beacons/queries (both roles use the same port). */
+    const val DISCOVERY_PORT = 45678
+
+    /** Discovery broadcast magic prefix, to ignore unrelated UDP traffic on the LAN. */
+    const val DISCOVERY_MAGIC = "MULTICAM_DISCOVER_V1"
+
     fun resolutionWidth(): Int = resolution.substringBefore('x').toIntOrNull() ?: 1920
     fun resolutionHeight(): Int = resolution.substringAfter('x').toIntOrNull() ?: 1080
 

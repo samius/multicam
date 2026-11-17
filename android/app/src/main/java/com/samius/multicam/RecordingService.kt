@@ -17,11 +17,14 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import com.samius.multicam.net.ApiClient
 import com.samius.multicam.net.Heartbeat
+import com.samius.multicam.lan.CameraHttpServer
+import com.samius.multicam.lan.DiscoveryProtocol
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -61,6 +64,11 @@ class RecordingService : LifecycleService() {
     private var boundNetwork: Network? = null
     private val connectivityManager by lazy { getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager }
 
+    private var lanHttpServer: CameraHttpServer? = null
+    private var discoveryResponder: DiscoveryProtocol.Responder? = null
+    private var localCmdId = AtomicInteger(0)
+    private var localDesiredRecording = false
+
     var onStateChanged: (() -> Unit)? = null
 
     override fun onCreate() {
@@ -75,11 +83,71 @@ class RecordingService : LifecycleService() {
         cameraController.start(null)
 
         bindToWifiIfAvailable()
+        startLanServerAndDiscovery()
 
         scope = CoroutineScope(Dispatchers.IO + Job())
         startPolling()
         startHeartbeat()
         startPreviewUpload()
+    }
+
+    /**
+     * Starts the embedded LAN HTTP server + UDP discovery responder. These run
+     * independently of the remote server/internet connectivity, so a phone in
+     * "controller" role on the same Wi-Fi/hotspot can find and control this
+     * camera directly even with zero internet access.
+     */
+    private fun startLanServerAndDiscovery() {
+        if (Config.isController()) return
+        lanHttpServer = CameraHttpServer(
+            statusProvider = { buildStatusJson() },
+            previewProvider = { cameraController.latestPreview() },
+            onCommand = { recording -> applyLocalCommand(recording) },
+        )
+        try {
+            lanHttpServer?.start(fi.iki.elonen.NanoHTTPD.SOCKET_READ_TIMEOUT, false)
+        } catch (e: Exception) {
+            Log.e(TAG, "LAN HTTP server failed to start: ${e.message}")
+        }
+
+        discoveryResponder = DiscoveryProtocol.Responder { buildDiscoveryJson() }
+        discoveryResponder?.start()
+    }
+
+    private fun buildStatusJson(): JSONObject {
+        val battery = DeviceStats.battery(this)
+        return JSONObject().apply {
+            put("id", Config.deviceName)
+            put("name", Config.deviceName)
+            put("recording", cameraController.isRecording)
+            put("cmdId", localCmdId.get())
+            put("currentFileDurationSec", cameraController.currentDurationSec())
+            battery.pct?.let { put("batteryPct", it) }
+            battery.charging?.let { put("charging", it) }
+            battery.tempC?.let { put("batteryTempC", it) }
+            put("thermalStatus", DeviceStats.thermalStatus(this@RecordingService))
+            put("freeSpaceBytes", StorageHelper.freeSpaceBytes(this@RecordingService))
+            put("resolution", Config.resolution)
+            put("fps", Config.fps)
+            put("bitrateKbps", Config.bitrateKbps)
+            put("currentFileName", cameraController.currentFileDescription)
+        }
+    }
+
+    private fun buildDiscoveryJson(): JSONObject {
+        return JSONObject().apply {
+            put("id", Config.deviceName)
+            put("name", Config.deviceName)
+            put("lanPort", Config.LAN_PORT)
+            put("recording", cameraController.isRecording)
+        }
+    }
+
+    /** Applies a start/stop command received over the LAN (controller role), independent of the remote server's cmdId. */
+    private fun applyLocalCommand(recording: Boolean) {
+        localCmdId.incrementAndGet()
+        localDesiredRecording = recording
+        applyDesiredState(recording)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -262,6 +330,8 @@ class RecordingService : LifecycleService() {
         heartbeatJob?.cancel()
         previewJob?.cancel()
         segmentJob?.cancel()
+        discoveryResponder?.stop()
+        try { lanHttpServer?.stop() } catch (_: Exception) {}
         cameraController.shutdown()
         instance = null
         super.onDestroy()

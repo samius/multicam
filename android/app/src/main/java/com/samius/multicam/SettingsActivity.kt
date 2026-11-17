@@ -41,12 +41,14 @@ class SettingsActivity : AppCompatActivity() {
         binding.editExposureUs.setText(Config.manualExposureUs.toString())
         binding.editWbKelvin.setText(Config.manualWbKelvin.toString())
         binding.checkUseSdCard.isChecked = Config.useSdCard
+        if (Config.isController()) binding.roleController.isChecked = true else binding.roleCamera.isChecked = true
 
         binding.saveButton.setOnClickListener { save() }
         binding.pickFolderButton.setOnClickListener { folderPicker.launch(null) }
     }
 
     private fun save() {
+        Config.role = if (binding.roleController.isChecked) "controller" else "camera"
         Config.serverUrl = binding.editServerUrl.text.toString().trim()
         Config.token = binding.editToken.text.toString().trim()
         Config.deviceName = binding.editDeviceName.text.toString().trim()

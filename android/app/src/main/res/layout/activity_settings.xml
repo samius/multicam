@@ -11,6 +11,28 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <TextView style="@style/SettingsLabel" android:text="Role zařízení" />
+        <RadioGroup
+            android:id="@+id/roleRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <RadioButton
+                android:id="@+id/roleCamera"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#E8E8EA"
+                android:text="Kamera" />
+            <RadioButton
+                android:id="@+id/roleController"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#E8E8EA"
+                android:text="Ovladač" />
+        </RadioGroup>
+
         <TextView style="@style/SettingsLabel" android:text="Server URL (např. https://camera.samius.cz)" />
         <EditText android:id="@+id/editServerUrl" style="@style/SettingsInput" android:inputType="textUri" />
 

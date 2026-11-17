@@ -60,6 +60,11 @@
             android:exported="false"
             android:theme="@style/Theme.Multicam" />
 
+        <activity
+            android:name=".ControllerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Multicam" />
+
         <service
             android:name=".RecordingService"
             android:exported="false"
