@@ -11,12 +11,22 @@
         android:layout_height="match_parent"
         app:scaleType="fillCenter" />
 
-    <!-- Black overlay to dim the screen during unattended recording; tap to toggle -->
+    <!-- Black overlay to fully blank the screen during unattended recording; tap to toggle -->
     <View
         android:id="@+id/dimOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#000000"
+        android:visibility="gone" />
+
+    <!-- Dark frame shown automatically while recording: dims the edges around the
+         preview so the phone doesn't leak much light on stage, while still showing
+         a thin strip of live image so you can tell at a glance it's working. -->
+    <View
+        android:id="@+id/recFrameOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/rec_frame_overlay"
         android:visibility="gone" />
 
     <LinearLayout

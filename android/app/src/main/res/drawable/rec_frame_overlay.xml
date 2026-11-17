@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dark frame shown automatically while recording. A thick near-opaque black
+  border around the whole screen with a small red accent stroke just inside
+  it, so at a glance (even from across the room) you can tell this phone is
+  actively recording without the screen lighting up the stage much.
+  Center stays fully transparent -> live preview still visible there.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <stroke android:width="22dp" android:color="#E8000000" />
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <stroke android:width="3dp" android:color="#AAE74C3C" />
+            <solid android:color="@android:color/transparent" />
+            <padding android:left="20dp" android:top="20dp" android:right="20dp" android:bottom="20dp" />
+        </shape>
+    </item>
+</layer-list>

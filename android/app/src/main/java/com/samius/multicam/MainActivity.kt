@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         Config.applyFromIntentExtras(intent.extras)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        setMinimumBrightness()
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -64,6 +65,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         startStatusRefresh()
+    }
+
+    /**
+     * Keeps the screen on (FLAG_KEEP_SCREEN_ON, set separately) but dims the backlight to
+     * its practical minimum so an unattended phone recording on stage doesn't spill light.
+     * 0.0f can fully blank the panel on some OEM skins, so a tiny nonzero value is used.
+     */
+    private fun setMinimumBrightness() {
+        val params = window.attributes
+        params.screenBrightness = 0.01f
+        window.attributes = params
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -115,6 +127,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     binding.recButton.isEnabled = true
                     binding.recButton.text = if (rec) "REC" else "STOP"
+                    binding.recFrameOverlay.visibility = if (rec) View.VISIBLE else View.GONE
                     val err = svc.lastError()
                     binding.connText.text = if (err != null) {
                         "Server: ${Config.serverUrl}  |  chyba: $err"
