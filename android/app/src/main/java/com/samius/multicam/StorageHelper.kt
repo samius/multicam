@@ -7,11 +7,7 @@ import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import android.provider.MediaStore
-import androidx.camera.video.FileOutputOptions
 import androidx.camera.video.MediaStoreOutputOptions
-import androidx.camera.video.PendingRecording
-import androidx.camera.video.Recorder
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
 

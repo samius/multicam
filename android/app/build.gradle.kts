@@ -15,12 +15,30 @@ android {
         versionName = "0.1.0"
     }
 
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("MULTICAM_KEYSTORE_PATH")
+            if (!keystorePath.isNullOrBlank() && file(keystorePath).exists()) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("MULTICAM_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("MULTICAM_KEY_ALIAS")
+                keyPassword = System.getenv("MULTICAM_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Unsigned release build for CI convenience; sign manually before real deployment
-            // if you need a consistent signing key across updates.
+            // Signed with the CI-managed keystore when MULTICAM_KEYSTORE_PATH points to an
+            // existing file (see .github/workflows/android-build.yml); falls back to unsigned
+            // for local builds without the secret env vars, so `gradle assembleRelease` still
+            // works out of the box for anyone cloning the repo.
+            val keystorePath = System.getenv("MULTICAM_KEYSTORE_PATH")
+            if (!keystorePath.isNullOrBlank() && file(keystorePath).exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         debug {
             isDebuggable = true
