@@ -1,0 +1,13 @@
+{
+  "name": "multicam-server",
+  "version": "1.0.0",
+  "description": "Multicam remote recording control server (state + heartbeat + preview relay + control page)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Multicam ovládání</title>
+<style>
+  :root {
+    --bg: #0b0c0f;
+    --card: #16181d;
+    --card-border: #26292f;
+    --text: #e8e8ea;
+    --muted: #8a8f98;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --amber: #f1c40f;
+    --accent: #3b82f6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg);
+    padding: 10px 12px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  header .title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  #connStatus { font-size: 11px; color: var(--muted); }
+  .global-buttons {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+  button {
+    font: inherit;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+  }
+  .btn-start { background: var(--green); flex: 1; }
+  .btn-stop { background: var(--red); flex: 1; }
+  .btn-start:active, .btn-stop:active { filter: brightness(0.85); }
+  main {
+    padding: 10px 12px 60px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  @media (min-width: 560px) {
+    main { grid-template-columns: 1fr 1fr; }
+  }
+  .cam-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .preview-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .preview-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .preview-wrap .no-preview {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .rec-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.55);
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .rec-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .rec-dot.live { background: var(--red); box-shadow: 0 0 6px var(--red); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .stale-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(231,76,60,0.85);
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .cam-body { padding: 10px 12px 12px; }
+  .cam-name { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .stat-row span.warn { color: var(--amber); }
+  .stat-row span.bad { color: var(--red); }
+  .cam-buttons { display: flex; gap: 8px; }
+  .cam-buttons button { flex: 1; }
+  footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 12px;
+  }
+  #tokenGate {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    z-index: 50;
+  }
+  #tokenGate input {
+    width: 100%;
+    max-width: 320px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 15px;
+  }
+  #tokenGate button { width: 100%; max-width: 320px; background: var(--accent); }
+  .hidden { display: none !important; }
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 40;
+    padding: 20px;
+  }
+  .confirm-box {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 18px;
+    max-width: 320px;
+    width: 100%;
+    text-align: center;
+  }
+  .confirm-box p { font-size: 14px; margin: 0 0 14px; }
+  .confirm-box .row { display: flex; gap: 8px; }
+  .btn-cancel { background: #3a3d44; flex: 1; }
+</style>
+</head>
+<body>
+
+<div id="tokenGate">
+  <h2 style="margin:0;font-size:18px;">Multicam ovládání</h2>
+  <p style="color:var(--muted);font-size:13px;text-align:center;margin:0;">Zadej přístupový token</p>
+  <input id="tokenInput" type="password" placeholder="token" autocomplete="off" />
+  <button id="tokenSubmit">Pokračovat</button>
+</div>
+
+<header class="hidden" id="appHeader">
+  <div class="title-row">
+    <h1>Multicam ovládání</h1>
+    <span id="connStatus">—</span>
+  </div>
+  <div class="global-buttons">
+    <button class="btn-start" id="startAll">▶ Start vše</button>
+    <button class="btn-stop" id="stopAll">■ Stop vše</button>
+  </div>
+</header>
+
+<main class="hidden" id="app"></main>
+
+<div id="confirmOverlay" class="confirm-overlay hidden">
+  <div class="confirm-box">
+    <p id="confirmText">Opravdu zastavit?</p>
+    <div class="row">
+      <button class="btn-cancel" id="confirmCancel">Zrušit</button>
+      <button class="btn-stop" id="confirmOk">Zastavit</button>
+    </div>
+  </div>
+</div>
+
+<footer class="hidden" id="appFooter">multicam-server</footer>
+
+<script>
+const POLL_MS = 1500;
+const STALE_MS = 5000;
+const PREVIEW_REFRESH_MS = 2000;
+
+let token = localStorage.getItem('multicam_token') || '';
+
+const tokenGate = document.getElementById('tokenGate');
+const tokenInput = document.getElementById('tokenInput');
+const tokenSubmit = document.getElementById('tokenSubmit');
+const appHeader = document.getElementById('appHeader');
+const appFooter = document.getElementById('appFooter');
+const app = document.getElementById('app');
+const connStatus = document.getElementById('connStatus');
+const startAllBtn = document.getElementById('startAll');
+const stopAllBtn = document.getElementById('stopAll');
+const confirmOverlay = document.getElementById('confirmOverlay');
+const confirmText = document.getElementById('confirmText');
+const confirmCancel = document.getElementById('confirmCancel');
+const confirmOk = document.getElementById('confirmOk');
+
+function showApp() {
+  tokenGate.classList.add('hidden');
+  appHeader.classList.remove('hidden');
+  app.classList.remove('hidden');
+  appFooter.classList.remove('hidden');
+}
+
+if (token) {
+  showApp();
+} else {
+  tokenInput.focus();
+}
+
+tokenSubmit.addEventListener('click', () => {
+  const v = tokenInput.value.trim();
+  if (!v) return;
+  token = v;
+  localStorage.setItem('multicam_token', token);
+  showApp();
+  poll();
+});
+tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tokenSubmit.click(); });
+
+function authHeaders() {
+  return { 'X-Auth-Token': token, 'Content-Type': 'application/json' };
+}
+
+function withToken(url) {
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}token=${encodeURIComponent(token)}`;
+}
+
+async function apiGet(path) {
+  const res = await fetch(path, { headers: authHeaders() });
+  if (res.status === 401) { localStorage.removeItem('multicam_token'); location.reload(); }
+  if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
+  return res.json();
+}
+
+async function apiPost(path, body) {
+  const res = await fetch(path, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+  if (res.status === 401) { localStorage.removeItem('multicam_token'); location.reload(); }
+  if (!res.ok) throw new Error(`POST ${path} -> ${res.status}`);
+  return res.json();
+}
+
+function fmtBytes(b) {
+  if (b == null) return '–';
+  const gb = b / (1024 ** 3);
+  return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(b / (1024 ** 2)).toFixed(0)} MB`;
+}
+
+function fmtDuration(sec) {
+  if (sec == null) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function thermalClass(status) {
+  if (!status) return '';
+  const s = String(status).toLowerCase();
+  if (s.includes('severe') || s.includes('critical') || s.includes('emergency') || s.includes('shutdown')) return 'bad';
+  if (s.includes('moderate') || s.includes('light')) return 'warn';
+  return '';
+}
+
+function batteryClass(pct) {
+  if (pct == null) return '';
+  if (pct <= 15) return 'bad';
+  if (pct <= 30) return 'warn';
+  return '';
+}
+
+function renderDevices(devices) {
+  app.innerHTML = '';
+  if (!devices.length) {
+    app.innerHTML = '<p style="color:var(--muted);text-align:center;grid-column:1/-1;">Žádná kamera se zatím nehlásila.</p>';
+    return;
+  }
+  devices.sort((a, b) => a.id.localeCompare(b.id));
+  for (const d of devices) {
+    const stale = d.ageMs == null || d.ageMs > STALE_MS;
+    const card = document.createElement('div');
+    card.className = 'cam-card';
+
+    const previewWrap = document.createElement('div');
+    previewWrap.className = 'preview-wrap';
+    if (d.hasPreview) {
+      const img = document.createElement('img');
+      img.src = withToken(`/api/preview/${encodeURIComponent(d.id)}?_=${Date.now()}`);
+      img.alt = d.name;
+      previewWrap.appendChild(img);
+    } else {
+      const span = document.createElement('span');
+      span.className = 'no-preview';
+      span.textContent = 'bez náhledu';
+      previewWrap.appendChild(span);
+    }
+
+    const recBadge = document.createElement('div');
+    recBadge.className = 'rec-badge';
+    recBadge.innerHTML = `<span class="rec-dot ${d.recording ? 'live' : ''}"></span>${d.recording ? 'REC ' + fmtDuration(d.currentFileDurationSec) : 'stop'}`;
+    previewWrap.appendChild(recBadge);
+
+    if (stale) {
+      const staleBadge = document.createElement('div');
+      staleBadge.className = 'stale-badge';
+      staleBadge.textContent = d.ageMs == null ? 'offline' : `výpadek ${Math.round(d.ageMs / 1000)}s`;
+      previewWrap.appendChild(staleBadge);
+    }
+
+    card.appendChild(previewWrap);
+
+    const body = document.createElement('div');
+    body.className = 'cam-body';
+
+    const name = document.createElement('div');
+    name.className = 'cam-name';
+    name.textContent = d.name;
+    body.appendChild(name);
+
+    const stats = document.createElement('div');
+    stats.className = 'stat-row';
+    const battCls = batteryClass(d.batteryPct);
+    const thermCls = thermalClass(d.thermalStatus);
+    stats.innerHTML = `
+      <span class="${battCls}">🔋 ${d.batteryPct ?? '–'}%${d.charging ? ' ⚡' : ''}</span>
+      <span class="${thermCls}">🌡 ${d.thermalStatus ?? '–'}${d.batteryTempC != null ? ' ' + d.batteryTempC.toFixed(0) + '°C' : ''}</span>
+      <span>💾 ${fmtBytes(d.freeSpaceBytes)}</span>
+      <span>${d.resolution ?? '–'} ${d.fps ? d.fps + 'fps' : ''}</span>
+    `;
+    body.appendChild(stats);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'cam-buttons';
+    const startBtn = document.createElement('button');
+    startBtn.className = 'btn-start';
+    startBtn.textContent = '▶ Start';
+    startBtn.disabled = d.recording;
+    startBtn.addEventListener('click', () => sendCommand(d.id, true));
+    const stopBtn = document.createElement('button');
+    stopBtn.className = 'btn-stop';
+    stopBtn.textContent = '■ Stop';
+    stopBtn.disabled = !d.recording;
+    stopBtn.addEventListener('click', () => confirmStop(d.id, d.name));
+    btnRow.appendChild(startBtn);
+    btnRow.appendChild(stopBtn);
+    body.appendChild(btnRow);
+
+    card.appendChild(body);
+    app.appendChild(card);
+  }
+}
+
+async function sendCommand(target, recording) {
+  try {
+    await apiPost('/api/command', { target, recording });
+    poll();
+  } catch (e) {
+    console.error(e);
+    alert('Příkaz selhal: ' + e.message);
+  }
+}
+
+let pendingConfirm = null;
+
+function confirmStop(target, label) {
+  pendingConfirm = target;
+  confirmText.textContent = `Opravdu zastavit nahrávání: ${label}?`;
+  confirmOverlay.classList.remove('hidden');
+}
+
+confirmCancel.addEventListener('click', () => {
+  confirmOverlay.classList.add('hidden');
+  pendingConfirm = null;
+});
+confirmOk.addEventListener('click', () => {
+  confirmOverlay.classList.add('hidden');
+  if (pendingConfirm) sendCommand(pendingConfirm, false);
+  pendingConfirm = null;
+});
+
+startAllBtn.addEventListener('click', () => sendCommand('all', true));
+stopAllBtn.addEventListener('click', () => {
+  pendingConfirm = 'all';
+  confirmText.textContent = 'Opravdu zastavit nahrávání na VŠECH kamerách?';
+  confirmOverlay.classList.remove('hidden');
+});
+
+let pollTimer = null;
+async function poll() {
+  if (!token) return;
+  try {
+    const data = await apiGet('/api/devices');
+    renderDevices(data.devices);
+    connStatus.textContent = `online · ${new Date(data.now).toLocaleTimeString('cs-CZ')}`;
+  } catch (e) {
+    connStatus.textContent = 'výpadek spojení';
+    console.error(e);
+  }
+}
+
+if (token) {
+  poll();
+}
+pollTimer = setInterval(poll, POLL_MS);
+</script>
+</body>
+</html>

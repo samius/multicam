@@ -1,0 +1,11 @@
+services:
+  web:
+    build: ./server
+    image: multicam-server:latest
+    container_name: multicam-server
+    restart: unless-stopped
+    environment:
+      - PORT=8787
+      - MULTICAM_TOKEN=${MULTICAM_TOKEN:-changeme-token}
+    ports:
+      - "127.0.0.1:8787:8787"
