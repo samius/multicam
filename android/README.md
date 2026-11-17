@@ -4,6 +4,29 @@ Nahrává video na SD kartu a reaguje na vzdálené start/stop příkazy ze
 serveru ([`../server`](../server)). Viz plný návrh v
 [`../handoff-multicam.md`](../handoff-multicam.md).
 
+## Dvě role appky (⚙ Nastavení → Role zařízení)
+
+Od této verze umí appka dvě role, přepínatelné kdykoliv v nastavení:
+
+- **Kamera** (výchozí) — nahrává, pollí vzdálený server i LAN, vysílá preview/heartbeat.
+- **Ovladač** — žádná kamera se nespouští. Místo toho appka přes UDP broadcast
+  automaticky vyhledá všechny telefony v roli Kamera na stejné Wi-Fi/hotspotu
+  a ovládá je **přímo přes LAN, bez internetu a bez vzdáleného serveru**.
+  Má vlastní obrazovku s mřížkou nalezených kamer, start/stop jednotlivě i pro
+  všechny, baterii/teplotu/stav nahrávání. Funguje i kompletně offline (jen
+  hotspot/router v místnosti, žádné připojení na `camera.samius.cz`).
+
+Technicky: každá kamera běží malý vestavěný HTTP server (port 8766) a
+odpovídá na UDP discovery dotazy (port 45678, broadcast). Ovladač dotaz
+rozešle, kamery odpoví přímo svou IP adresou (zjištěnou ze zdrojové adresy
+UDP paketu, ne z vlastního tvrzení telefonu), ovladač pak mluví s každou
+kamerou zvlášť přes `GET /status`, `GET /preview.jpg`, `POST /command`.
+
+Tahle LAN cesta běží **souběžně** s cestou přes vzdálený server — kamera
+dělá obojí najednou, takže ovládací web (`camera.samius.cz`) a nativní
+ovladač v appce jsou nezávislé a fungují i současně (třeba záloha: ovladač
+v appce na pódiu + web na mobilu operátora mimo síť).
+
 ## Build
 
 Build se dělá přes GitHub Actions (Athéna nemá Android SDK). Push do `master`
